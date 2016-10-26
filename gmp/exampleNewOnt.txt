@@ -1,0 +1,96 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="tmf854.v1" xmlns:alu="alu.v1">
+	<soapenv:Header>
+		<header>
+			<activityName>notify</activityName>
+			<msgName>notify</msgName>
+			<msgType>NOTIFICATION</msgType>
+			<senderURI>http://10.35.82.161</senderURI>
+			<destinationURI>urn:topic/Fault</destinationURI>
+			<communicationPattern>Notification</communicationPattern>
+			<communicationStyle>MSG</communicationStyle>
+			<timestamp>20140922091606.901+0300</timestamp>
+		</header>
+	</soapenv:Header>
+	<soapenv:Body>
+		<notify>
+			<topic>topic/Fault</topic>
+			<message>
+				<Alarm>
+					<eventInfo>
+						<notificationId>AMS:20770</notificationId>
+						<objectName>
+							<mdNm>AMS</mdNm>
+							<meNm>Raman-OLT1</meNm>
+							<ptpNm>/rack=1/shelf=1/slot=LT3/port=6</ptpNm>
+						</objectName>
+						<objectType>OT_PHYSICAL_TERMINATION_POINT</objectType>
+						<osTime>20140922091606.898+0300</osTime>
+						<neTime>20140922091604.584+0300</neTime>
+					</eventInfo>
+					<isClearable>true</isClearable>
+					<aliasNameList>
+						<alias>
+							<aliasName>REPORTING_FOR</aliasName>
+							<aliasValue>ONT New:Raman-OLT1:R1.S1.LT3.PON6.NEWONT1</aliasValue>
+						</alias>
+						<alias>
+							<aliasName>NE_ALIAS_NAME</aliasName>
+							<aliasValue></aliasValue>
+						</alias>
+					</aliasNameList>
+					<layerRate>PROP_UNKNOWN</layerRate>
+					<probableCause>
+						<ru>false</ru>
+						<contra>false</contra>
+						<type>EQPT</type>
+					</probableCause>
+					<nativeProbableCause>Configuration Or Customization Error</nativeProbableCause>
+					<additionalText>SERNUM = ALCLF9017954, SLID = DEFAULT, LOID = , DISIND = </additionalText>
+					<perceivedSeverity>PS_MINOR</perceivedSeverity>
+					<serviceAffecting>SA_NON_SERVICE_AFFECTING</serviceAffecting>
+					<rcaiIndicator>false</rcaiIndicator>
+					<acknowledgeIndication>AI_EVENT_UNACKNOWLEDGED</acknowledgeIndication>
+					<X733_EventType>equipmentAlarm</X733_EventType>
+					<X733_SpecificProblems>
+						<specificProblem>New ONT Discovered</specificProblem>
+					</X733_SpecificProblems>
+					<X733_ProposedRepairActions>
+						<proposedRepairAction>No repair is necessary. This alarm serves as an indication that further provisioning is required.</proposedRepairAction>
+					</X733_ProposedRepairActions>
+					<vendorExtensions>
+						<alu:package alu:name="ADDITIONAL_ATTRIBUTES">
+							<alu:NameAndStringValue>
+								<name>tl1Cause</name>
+								<value>NEWONT</value>
+							</alu:NameAndStringValue>
+							<alu:NameAndStringValue>
+								<name>alarmDomain</name>
+								<value>PON</value>
+							</alu:NameAndStringValue>
+							<alu:NameAndStringValue>
+								<name>neGroup</name>
+								<value>Network/DIYARBAKIR</value>
+							</alu:NameAndStringValue>
+							<alu:NameAndStringValue>
+								<name>neType</name>
+								<value>iSAM</value>
+							</alu:NameAndStringValue>
+							<alu:NameAndStringValue>
+								<name>probableCauseMnemonic</name>
+								<value>CFG</value>
+							</alu:NameAndStringValue>
+							<alu:NameAndStringValue>
+								<name>neAlarmType</name>
+								<value>45/7</value>
+							</alu:NameAndStringValue>
+							<alu:NameAndStringValue>
+								<name>neIpAddress</name>
+								<value>10.34.252.30</value>
+							</alu:NameAndStringValue>
+						</alu:package>
+					</vendorExtensions>
+				</Alarm>
+			</message>
+		</notify>
+	</soapenv:Body>
+</soapenv:Envelope>
