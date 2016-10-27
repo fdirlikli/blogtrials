@@ -3,10 +3,13 @@ package com.nokia.gmp;
 import com.nokia.gmp.domain.Ont;
 import com.nokia.gmp.domain.Service;
 import com.nokia.gmp.domain.WorkOrder;
+import com.nokia.gmp.domain.command.ConfirmWorkOrderCommand;
+import com.nokia.gmp.domain.command.CancelWorkOrderCommand;
 import com.nokia.gmp.domain.exception.OntInUseException;
 import com.nokia.gmp.feign.clients.OntServiceClient;
 import com.nokia.gmp.repository.ServiceRepository;
 import com.nokia.gmp.repository.WorkOrderRepository;
+import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -14,11 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.Validator;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
 
 /**
  * Created by fatih.dirlikli on 03/06/16.
@@ -36,11 +36,29 @@ public class WorkOrderController {
     private ServiceRepository serviceRepository;
     @Autowired
     private OntServiceClient ontServiceClient;
+    @Autowired
+    private CommandGateway commandGateway;
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
     public WorkOrderController() {
+    }
+
+    @RequestMapping(value = "/workorder/create", method = RequestMethod.GET)
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createWorkOrder(@RequestParam("id") Integer id)
+    {
+        ConfirmWorkOrderCommand command = new ConfirmWorkOrderCommand(id);
+        commandGateway.send(command);
+    }
+
+    @RequestMapping(value = "/workorder/update", method = RequestMethod.GET)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void updateWorkOrder(@RequestParam("id") Long id)
+    {
+        CancelWorkOrderCommand command = new CancelWorkOrderCommand(id);
+        commandGateway.send(command);
     }
 
     @RequestMapping(value = "/workorder/mytest", method = RequestMethod.GET)
