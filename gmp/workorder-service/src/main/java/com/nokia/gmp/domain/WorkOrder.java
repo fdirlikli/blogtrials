@@ -1,7 +1,15 @@
 package com.nokia.gmp.domain;
 
 
+import com.nokia.gmp.domain.command.CancelWorkOrderCommand;
+import com.nokia.gmp.domain.command.ConfirmWorkOrderCommand;
+import com.nokia.gmp.domain.event.WorkOrderCancelledEvent;
+import com.nokia.gmp.domain.event.WorkOrderCreatedEvent;
+import org.axonframework.commandhandling.annotation.CommandHandler;
+import org.axonframework.domain.AbstractAggregateRoot;
 import org.axonframework.eventsourcing.annotation.AbstractAnnotatedAggregateRoot;
+import org.axonframework.eventsourcing.annotation.AggregateIdentifier;
+import org.axonframework.eventsourcing.annotation.EventSourcingHandler;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.persistence.*;
@@ -20,14 +28,19 @@ public class WorkOrder extends AbstractAnnotatedAggregateRoot implements Seriali
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+   // @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
+    @AggregateIdentifier
     private Long id;
 
     public WorkOrder() {
         super();
     }
 
+    public WorkOrder(Long id){
+       // this.id = command.getWorkOrderId();
+        apply(new WorkOrderCreatedEvent(id));
+    }
     @Column(name = "CPE_serial_number")
     private String cpeSerialNumber;
 
@@ -126,6 +139,29 @@ public class WorkOrder extends AbstractAnnotatedAggregateRoot implements Seriali
 
     public void setServices(List<Service> services) {
         this.services = services;
+    }
+
+    @EventSourcingHandler
+    public void createWorkOrder(WorkOrderCreatedEvent event){
+
+        this.id = event.getWorkOrderId();
+
+    }
+
+    @CommandHandler
+    public void cancel(CancelWorkOrderCommand command){
+        this.setId(command.getWorkOrderId());
+        apply(new WorkOrderCancelledEvent(this.id));
+    }
+
+   // @CommandHandler
+    public void confirm(ConfirmWorkOrderCommand command){
+        this.setStatusMessage("CONFIRMED");
+    }
+
+    @Override
+    public Object getIdentifier() {
+        return this.id;
     }
 
     public enum WorkOrderType
