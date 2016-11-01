@@ -5,6 +5,7 @@ import com.nokia.gmp.domain.Service;
 import com.nokia.gmp.domain.WorkOrder;
 import com.nokia.gmp.domain.command.ConfirmWorkOrderCommand;
 import com.nokia.gmp.domain.command.CancelWorkOrderCommand;
+import com.nokia.gmp.domain.command.CreateWorkOrderCommand;
 import com.nokia.gmp.domain.exception.OntInUseException;
 import com.nokia.gmp.feign.clients.OntServiceClient;
 import com.nokia.gmp.repository.ServiceRepository;
@@ -20,18 +21,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.transaction.Transactional;
+
 /**
  * Created by fatih.dirlikli on 03/06/16.
  */
 
 
 
-@RepositoryRestController
+@RestController
 public class WorkOrderController {
 
     private static final Logger logger = LoggerFactory.getLogger(WorkOrderController.class);
-    @Autowired
-    private WorkOrderRepository workOrderRepository;
+   // @Autowired
+   // private WorkOrderRepository workOrderRepository;
     @Autowired
     private ServiceRepository serviceRepository;
     @Autowired
@@ -47,17 +50,19 @@ public class WorkOrderController {
 
     @RequestMapping(value = "/workorder/create", method = RequestMethod.GET)
     @ResponseStatus(HttpStatus.CREATED)
-    public void createWorkOrder(@RequestParam("id") Integer id)
+    @Transactional
+    public void createWorkOrder(@RequestParam("id") Long id)
     {
-        ConfirmWorkOrderCommand command = new ConfirmWorkOrderCommand(id);
-        commandGateway.send(command);
+         CreateWorkOrderCommand command = new CreateWorkOrderCommand(id);
+         commandGateway.send(command);
     }
 
     @RequestMapping(value = "/workorder/update", method = RequestMethod.GET)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void updateWorkOrder(@RequestParam("id") Long id)
+    @Transactional
+    public void updateWorkOrder(@RequestParam("id") Long id, @RequestParam("msg") String message)
     {
-        CancelWorkOrderCommand command = new CancelWorkOrderCommand(id);
+        CancelWorkOrderCommand command = new CancelWorkOrderCommand(id,message);
         commandGateway.send(command);
     }
 
@@ -87,7 +92,7 @@ public class WorkOrderController {
             //return new ResponseEntity(HttpStatus.PRECONDITION_FAILED);
            throw new OntInUseException("Ont in use");
         }
-        WorkOrder createdWO = workOrderRepository.save(inputWorkOrder);
+        WorkOrder createdWO = null;// = workOrderRepository.save(inputWorkOrder);
         if(inputWorkOrder.getServices() != null){
             inputWorkOrder.getServices()
                     .stream()

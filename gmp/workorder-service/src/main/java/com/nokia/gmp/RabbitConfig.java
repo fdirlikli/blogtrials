@@ -6,7 +6,9 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -15,17 +17,17 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Created by ben on 23/02/16.
  */
-@Configuration
+//@Configuration
 public class RabbitConfig {
 
-    @Value("${spring.rabbitmq.hostname}")
+    @Value("${spring.rabbitmq.host}")
     private String hostname;
 
-    @Value("${spring.rabbitmq.username}")
+   /* @Value("${spring.rabbitmq.username}")
     private String username;
 
     @Value("${spring.rabbitmq.password}")
-    private String password;
+    private String password;*/
 
     @Value("${spring.application.exchange}")
     private String exchangeName;
@@ -50,13 +52,10 @@ public class RabbitConfig {
 
     @Bean
     ConnectionFactory connectionFactory() {
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(hostname);
-        connectionFactory.setUsername(username);
-        connectionFactory.setPassword(password);
-        return connectionFactory;
+        return new CachingConnectionFactory(hostname);
     }
 
-    @Bean
+    /*@Bean
     @Required
     RabbitAdmin rabbitAdmin() {
         RabbitAdmin admin = new RabbitAdmin(connectionFactory());
@@ -65,6 +64,16 @@ public class RabbitConfig {
         admin.declareQueue(defaultStream());
         admin.declareBinding(binding());
         return admin;
+    }*/
+
+    @Bean
+    public RabbitTemplate rabbitTemplate()
+    {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory());
+        rabbitTemplate.setExchange(exchangeName);
+        rabbitTemplate.setQueue(queueName);
+        rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+        return rabbitTemplate;
     }
 
     @Bean

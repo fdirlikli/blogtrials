@@ -13,11 +13,11 @@ import java.util.List;
  * Created by fdirlikl on 5/6/2015.
  */
 //@PreAuthorize("hasRole('ROLE_USER')")
-@RepositoryRestResource(collectionResourceRel = "workorder",path = "workorder")
-public interface WorkOrderRepository extends PagingAndSortingRepository<WorkOrder, Long> {
+//@RepositoryRestResource(collectionResourceRel = "workorder",path = "workorder")
+public interface WorkOrderRepository  {
 
-    @Override
-    @RestResource(exported = false)
+  //  @Override
+   // @RestResource(exported = false)
     public WorkOrder save(WorkOrder s);
 
 

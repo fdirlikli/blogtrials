@@ -3,10 +3,12 @@ package com.nokia.gmp.domain;
 
 import com.nokia.gmp.domain.command.CancelWorkOrderCommand;
 import com.nokia.gmp.domain.command.ConfirmWorkOrderCommand;
+import com.nokia.gmp.domain.command.CreateWorkOrderCommand;
 import com.nokia.gmp.domain.event.WorkOrderCancelledEvent;
 import com.nokia.gmp.domain.event.WorkOrderCreatedEvent;
 import org.axonframework.commandhandling.annotation.CommandHandler;
 import org.axonframework.domain.AbstractAggregateRoot;
+import org.axonframework.eventsourcing.EventSourcedAggregateRoot;
 import org.axonframework.eventsourcing.annotation.AbstractAnnotatedAggregateRoot;
 import org.axonframework.eventsourcing.annotation.AggregateIdentifier;
 import org.axonframework.eventsourcing.annotation.EventSourcingHandler;
@@ -17,19 +19,17 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.Id;
+import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 
 /**
  * Created by fdirlikl on 5/13/2016.
  */
+
 @Entity
-@Table(name = "Workorder")
 public class WorkOrder extends AbstractAnnotatedAggregateRoot implements Serializable {
     private static final long serialVersionUID = 1L;
-
     @Id
-   // @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id")
     @AggregateIdentifier
     private Long id;
 
@@ -37,31 +37,23 @@ public class WorkOrder extends AbstractAnnotatedAggregateRoot implements Seriali
         super();
     }
 
-    public WorkOrder(Long id){
-       // this.id = command.getWorkOrderId();
-        apply(new WorkOrderCreatedEvent(id));
+    @CommandHandler
+    public WorkOrder(CreateWorkOrderCommand command){
+        apply(new WorkOrderCreatedEvent(command.getWorkOrderId()));
     }
-    @Column(name = "CPE_serial_number")
     private String cpeSerialNumber;
 
-    @Column(name = "CPE_mac_address")
     private String cpeMacAddress;
 
-    @Column(name = "ONT_serial_number")
-    @NotEmpty
+
     private String ontSerialNumber;
 
-    @Column(name = "creationDate")
     private Date creationDate;
 
-    @Column(name = "createdBy")
     private String createdBy;
 
-    @Column(name = "status_message")
     private String statusMessage;
 
-    @Column(name = "type")
-    @NotNull
     private WorkOrderType type;
 
     @Transient
@@ -143,25 +135,23 @@ public class WorkOrder extends AbstractAnnotatedAggregateRoot implements Seriali
 
     @EventSourcingHandler
     public void createWorkOrder(WorkOrderCreatedEvent event){
-
         this.id = event.getWorkOrderId();
-
     }
 
     @CommandHandler
     public void cancel(CancelWorkOrderCommand command){
         this.setId(command.getWorkOrderId());
-        apply(new WorkOrderCancelledEvent(this.id));
+        apply(new WorkOrderCancelledEvent(this.id,command.getMessage()));
+    }
+
+    @EventSourcingHandler
+    public void updateWorkOrderStatusMessage(WorkOrderCancelledEvent event){
+        this.setStatusMessage(event.getStatusMessage());
     }
 
    // @CommandHandler
     public void confirm(ConfirmWorkOrderCommand command){
         this.setStatusMessage("CONFIRMED");
-    }
-
-    @Override
-    public Object getIdentifier() {
-        return this.id;
     }
 
     public enum WorkOrderType
