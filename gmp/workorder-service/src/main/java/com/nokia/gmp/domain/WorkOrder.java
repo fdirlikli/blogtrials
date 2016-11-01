@@ -134,6 +134,7 @@ public class WorkOrder extends AbstractAnnotatedAggregateRoot implements Seriali
     }
 
     @EventSourcingHandler
+    @Transactional
     public void createWorkOrder(WorkOrderCreatedEvent event){
         this.id = event.getWorkOrderId();
     }

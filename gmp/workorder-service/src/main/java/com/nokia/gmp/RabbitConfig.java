@@ -11,74 +11,68 @@ import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Created by ben on 23/02/16.
  */
-//@Configuration
+@Configuration
 public class RabbitConfig {
 
-    @Value("${spring.rabbitmq.host}")
-    private String hostname;
+    final static String eventQueue = "GMP-EVENT-QUEUE";
+    final static String eventExchange = "GMP-EVENT-EXCHANGE";
 
-   /* @Value("${spring.rabbitmq.username}")
-    private String username;
-
-    @Value("${spring.rabbitmq.password}")
-    private String password;*/
-
-    @Value("${spring.application.exchange}")
-    private String exchangeName;
-
-    @Value("${spring.application.queue}")
-    private String queueName;
 
     @Bean
     Queue defaultStream() {
-        return new Queue(queueName, true);
+        return new Queue(eventQueue, true);
     }
 
     @Bean
     FanoutExchange eventBusExchange() {
-        return new FanoutExchange(exchangeName, true, false);
+        return new FanoutExchange(eventExchange, true, false);
     }
 
     @Bean
     Binding binding() {
-        return new Binding(queueName, Binding.DestinationType.QUEUE, exchangeName, "*.*", null);
+        return new Binding(eventQueue, Binding.DestinationType.QUEUE, eventExchange, "*.*", null);
     }
+
+
 
     @Bean
-    ConnectionFactory connectionFactory() {
-        return new CachingConnectionFactory(hostname);
-    }
-
-    /*@Bean
     @Required
-    RabbitAdmin rabbitAdmin() {
-        RabbitAdmin admin = new RabbitAdmin(connectionFactory());
+    RabbitAdmin rabbitAdmin(ConnectionFactory factory) {
+        RabbitAdmin admin = new RabbitAdmin(factory);
         admin.setAutoStartup(true);
         admin.declareExchange(eventBusExchange());
         admin.declareQueue(defaultStream());
         admin.declareBinding(binding());
         return admin;
-    }*/
+    }
 
-    @Bean
-    public RabbitTemplate rabbitTemplate()
+    /*@Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory factory)
     {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory());
-        rabbitTemplate.setExchange(exchangeName);
-        rabbitTemplate.setQueue(queueName);
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(factory);
+        rabbitTemplate.setExchange(eventExchange);
+        rabbitTemplate.setQueue(eventQueue);
         rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
         return rabbitTemplate;
+    }*/
+
+  /*  @Bean(name = "rabbitTransactionManager")
+    RabbitTransactionManager rabbitTransactionManager(ConnectionFactory factory){
+        RabbitTransactionManager txMgr = new RabbitTransactionManager(factory);
+        return txMgr;
     }
 
     @Bean
-    RabbitTransactionManager transactionManager(){
-        RabbitTransactionManager txMgr = new RabbitTransactionManager(connectionFactory());
-        return txMgr;
-    }
+    public PlatformTransactionManager transactionManager() {
+        return new JpaTransactionManager();
+    }*/
 }

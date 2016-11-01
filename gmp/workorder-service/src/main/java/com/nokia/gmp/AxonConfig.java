@@ -6,14 +6,19 @@ import org.axonframework.commandhandling.annotation.AggregateAnnotationCommandHa
 import org.axonframework.commandhandling.gateway.DefaultCommandGateway;
 import org.axonframework.common.jpa.ContainerManagedEntityManagerProvider;
 import org.axonframework.contextsupport.spring.AnnotationDriven;
-import org.axonframework.eventhandling.SimpleEventBus;
+import org.axonframework.eventhandling.*;
+import org.axonframework.eventhandling.amqp.spring.ListenerContainerLifecycleManager;
+import org.axonframework.eventhandling.amqp.spring.SpringAMQPConsumerConfiguration;
+import org.axonframework.eventhandling.amqp.spring.SpringAMQPTerminal;
+import org.axonframework.eventhandling.async.AsynchronousCluster;
 import org.axonframework.eventsourcing.EventCountSnapshotterTrigger;
 import org.axonframework.eventsourcing.EventSourcingRepository;
 import org.axonframework.eventsourcing.GenericAggregateFactory;
-import org.axonframework.eventsourcing.HybridJpaRepository;
 import org.axonframework.eventstore.EventStore;
 import org.axonframework.eventstore.jpa.JpaEventStore;
+import org.axonframework.serializer.json.JacksonSerializer;
 import org.axonframework.serializer.xml.XStreamSerializer;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,26 +29,15 @@ import org.springframework.context.annotation.Configuration;
 @AnnotationDriven
 public class AxonConfig {
 
+    private static final String AMQP_CONFIG_KEY = "AMQP.Config";
+    private final static String eventQueue = "GMP-EVENT-QUEUE";
+    private final static String eventExchange = "GMP-EVENT-EXCHANGE";
+
     @Bean
     public SimpleCommandBus commandBus() {
         SimpleCommandBus simpleCommandBus = new SimpleCommandBus();
         return simpleCommandBus;
     }
-
-
-   /* @Bean
-    AnnotationCommandHandlerBeanPostProcessor annotationCommandHandlerBeanPostProcessor() {
-        *//**
-         * The AnnotationCommandHandlerBeanPostProcessor
-         * finds all beans that has @CommandHandler
-         * and subscribed them to the commandBus with the
-         * first argument of the method being the
-         * the command type the method will be subscribed to.
-         *//*
-        AnnotationCommandHandlerBeanPostProcessor handler = new AnnotationCommandHandlerBeanPostProcessor();
-        handler.setCommandBus(commandBus());
-        return handler;
-    }*/
 
     @Bean
     public DefaultCommandGateway commandGateway() {
@@ -52,18 +46,58 @@ public class AxonConfig {
 
 
     @Bean
-    public EventSourcingRepository<WorkOrder> genericJpaRepository(EventStore eventStore){
+    public EventSourcingRepository<WorkOrder> genericJpaRepository(EventStore eventStore,EventBus eventBus){
         EventCountSnapshotterTrigger trigger = new EventCountSnapshotterTrigger();
         trigger.setTrigger(3);
         EventSourcingRepository<WorkOrder> repository = new EventSourcingRepository<WorkOrder>(new GenericAggregateFactory<WorkOrder>(WorkOrder.class),eventStore);
-        repository.setEventBus(eventBus());
+        repository.setEventBus(eventBus);
         repository.setSnapshotterTrigger(trigger);
         return repository;
     }
 
     @Bean
-    public SimpleEventBus eventBus() {
-        return new SimpleEventBus();
+    SpringAMQPConsumerConfiguration springAMQPConsumerConfiguration() {
+        SpringAMQPConsumerConfiguration cfg = new SpringAMQPConsumerConfiguration();
+        //cfg.setTransactionManager(transactionManager);
+        cfg.setQueueName(eventQueue);
+        cfg.setTxSize(10);
+        return cfg;
+    }
+    @Bean
+    AsynchronousCluster simpleCluster(SpringAMQPConsumerConfiguration springAMQPConsumerConfiguration) {
+        AsynchronousCluster cluster = new AsynchronousCluster(eventQueue);
+        cluster.getMetaData().setProperty(AMQP_CONFIG_KEY, springAMQPConsumerConfiguration);
+        return cluster;
+    }
+
+    @Bean
+    ListenerContainerLifecycleManager listenerContainerLifecycleManager(ConnectionFactory connectionFactory) {
+        ListenerContainerLifecycleManager mgr = new ListenerContainerLifecycleManager();
+        mgr.setConnectionFactory(connectionFactory);
+        return mgr;
+    }
+
+    @Bean
+    JacksonSerializer axonJsonSerializer() {
+        return new JacksonSerializer();
+    }
+
+    @Bean
+    EventBusTerminal terminal(ConnectionFactory connectionFactory,ListenerContainerLifecycleManager listenerContainerLifecycleManager) {
+        SpringAMQPTerminal terminal = new SpringAMQPTerminal();
+        terminal.setConnectionFactory(connectionFactory);
+        terminal.setExchangeName(eventExchange);
+        terminal.setDurable(true);
+        //terminal.setTransactional(true);
+        terminal.setSerializer(eventSerializer());
+        //terminal.setSerializer(xmlSerializer());
+        terminal.setListenerContainerLifecycleManager(listenerContainerLifecycleManager);
+        return terminal;
+    }
+
+    @Bean
+    public EventBus eventBus(EventBusTerminal terminal,SimpleCluster simpleCluster) {
+        return new ClusteringEventBus(new DefaultClusterSelector(simpleCluster), terminal);
     }
 
     @Bean

@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @SpringBootApplication
 @EnableJpaRepositories(basePackages = "com.nokia.gmp.repository")
-//@EnableRabbit
+@EnableRabbit
 @EnableDiscoveryClient
 @EnableHystrixDashboard
 @EnableCircuitBreaker
